@@ -164,6 +164,36 @@ public class TestNestedCall
 		}
 		System.err.println("done");
 	}
+	
+	@Test
+	public void testLimitSlow() throws InterruptedException
+	{
+		final byte[] key = "foo".getBytes();
+		final byte[] value = "bla".getBytes();
+		final byte[] otherValue = "foobla".getBytes();
+		cg.setAutomaticCleanup(true);
+		cs.setAutomaticCleanup(true);
+		for (int i = 0; i < 100000; i++)
+		{
+			putIfAbsent(key, value, 60, null, null, new Callback<Boolean>()
+			{
+				@Override
+				public void onMessage(final Boolean result)
+				{
+					// try another put for the same key (that should fail)
+					putIfAbsent(key, otherValue, 60, null, null, new Callback<Boolean>()
+					{
+						@Override
+						public void onMessage(final Boolean res)
+						{
+							//do nothing
+						}
+					});
+				}
+			});
+		}
+		System.err.println("done");
+	}
 
 	public void putIfAbsent(final byte[] key, final byte[] value, final int timeout, final ChannelCreator channelCreator1,
 			final ChannelCreator channelCreator2, final Callback<Boolean> callback)
